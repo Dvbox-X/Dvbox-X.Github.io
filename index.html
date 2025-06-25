@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub链接转换工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+        }
+        
+        /* 加载动画样式 */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        body {
+            background-color: #fafafa;
+            color: #222;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            padding: 80px 0;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+        
+        section {
+            padding: 60px 0;
+        }
+        
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .feature {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        
+        .feature h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .feature p {
+            color: #666;
+        }
+        
+        /* 截图样式 - 强制横向排列 */
+        .screenshots-container {
+            width: 100%;
+            overflow-x: auto;
+            margin: 40px 0;
+            padding-bottom: 20px; /* 给滚动条留空间 */
+        }
+        
+        .screenshots {
+            display: flex;
+            gap: 20px;
+            width: max-content; /* 让内容决定宽度 */
+            padding: 10px 0;
+        }
+        
+        .screenshot {
+            width: 300px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .screenshot:hover {
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条样式 */
+        .screenshots-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .screenshots-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .screenshots-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .screenshots-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .step {
+            flex: 1;
+            min-width: 240px;
+            background: white;
+            padding: 28px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: #333;
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .cta-section {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 80px 0;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        
+        .cta-section.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .cta-section .btn {
+            background: white;
+            color: #333;
+        }
+        
+        .cta-section .btn:hover {
+            background: #f5f5f5;
+        }
+        
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 60px 0;
+            }
+            
+            section {
+                padding: 40px 0;
+            }
+            
+            .section-title {
+                margin-bottom: 30px;
+            }
+            
+            .screenshot {
+                width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <h1>GitHub链接转换工具</h1>
+            <p class="subtitle">快速将GitHub链接转换为Raw或下载链接，提升开发效率</p>
+            <a href="#try" class="btn" id="try-btn">立即使用</a>
+        </div>
+    </header>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title">核心功能</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>一键转换</h3>
+                    <p>粘贴GitHub链接后立即获得转换结果，无需复杂操作</p>
+                </div>
+                <div class="feature">
+                    <h3>多种格式</h3>
+                    <p>支持文件、仓库等多种GitHub链接格式转换</p>
+                </div>
+                <div class="feature">
+                    <h3>简洁高效</h3>
+                    <p>界面简洁，操作直观，专注于核心功能</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title">应用截图</h2>
+            <div class="screenshots-container">
+                <div class="screenshots">
+                    <img src="b.png" alt="应用界面截图1" class="screenshot">
+                    <img src="c.png" alt="应用界面截图2" class="screenshot">
+                    <img src="d.png" alt="应用界面截图3" class="screenshot">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title">使用步骤</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>复制链接</h3>
+                    <p>从GitHub复制需要转换的链接</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>粘贴转换</h3>
+                    <p>将链接粘贴到输入框中自动转换</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>使用结果</h3>
+                    <p>复制转换后的链接直接使用</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="try" class="cta-section">
+        <div class="container">
+            <h2 class="section-title">立即开始使用</h2>
+            <p style="margin-bottom: 32px;">v完全免费</p>
+            <a href="https://dvg.lanzoue.com/iIO7S2zjn6fg" class="btn">开始转换</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>GitHub链接转换工具</p>
+        </div>
+    </footer>
+
+    <script>
+        // 页面加载完成后隐藏加载动画
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loader = document.querySelector('.loader');
+                loader.style.opacity = '0';
+                setTimeout(function() {
+                    loader.style.display = 'none';
+                }, 500);
+            }, 1000);
+            
+            // 检查是否在#try位置
+            checkTrySectionVisibility();
+        });
+
+        // 平滑滚动和动画效果
+        document.getElementById('try-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const trySection = document.getElementById('try');
+            
+            // 平滑滚动
+            trySection.scrollIntoView({
+                behavior: 'smooth'
+            });
+            
+            // 添加动画类
+            setTimeout(function() {
+                trySection.classList.add('visible');
+            }, 800); // 滚动完成后触发动画
+        });
+
+        // 滚动时检查#try部分是否可见
+        window.addEventListener('scroll', function() {
+            checkTrySectionVisibility();
+        });
+
+        function checkTrySectionVisibility() {
+            const trySection = document.getElementById('try');
+            const rect = trySection.getBoundingClientRect();
+            const isVisible = (rect.top <= window.innerHeight * 0.8);
+            
+            if (isVisible) {
+                trySection.classList.add('visible');
+            }
+        }
+    </script>
+</body>
+</html>
